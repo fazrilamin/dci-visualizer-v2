@@ -1,37 +1,31 @@
 <?php
 /*
-Plugin Name: DCI Visualizer v2
-Description: Visualize Data Centre Interconnect with animated flow lines on a real map
-Version: 2.0
+Plugin Name: Malaysia Data Center Interconnect
+Description: Visualize Malaysia Data Center Interconnects with animated SVG and admin panel.
+Version: 1.0
 Author: Fazril Amin
 */
 
-if (!defined('ABSPATH')) exit; // Exit if accessed directly
+add_action('admin_enqueue_scripts', function() {
+    wp_enqueue_script('mdc-script', plugins_url('js/interconnect.js', __FILE__), ['jquery'], false, true);
+    wp_enqueue_style('mdc-style', plugins_url('css/interconnect.css', __FILE__));
+    wp_localize_script('mdc-script', 'mdc_ajax', ['ajax_url' => admin_url('admin-ajax.php')]);
+});
 
-// Enqueue scripts and styles
-function dci_visualizer_assets() {
-    wp_enqueue_style('leaflet-css', 'https://unpkg.com/leaflet/dist/leaflet.css');
-    wp_enqueue_style('dci-style', plugin_dir_url(__FILE__) . 'assets/style.css');
+include_once plugin_dir_path(__FILE__) . 'includes/admin-panel.php';
+include_once plugin_dir_path(__FILE__) . 'includes/ajax-handlers.php';
 
-    wp_enqueue_script('leaflet-js', 'https://unpkg.com/leaflet/dist/leaflet.js', [], false, true);
-    wp_enqueue_script('dci-script', plugin_dir_url(__FILE__) . 'assets/script.js', array('leaflet-js'), false, true);
+add_shortcode('malaysia_dc_map', function() {
+    ob_start();
+    include plugin_dir_path(__FILE__) . 'templates/map-template.php';
+    return ob_get_clean();
+});
 
-    // Pass PHP data to JS (optional)
-    wp_localize_script('dci-visualizer-js', 'dci_vars', [
-    'datacenters' => json_decode(get_option('dci_datacenters', '[]')),
-]);
-
-}
-add_action('wp_enqueue_scripts', 'dci_visualizer_assets');
-
-// Shortcode
-function dci_visualizer_shortcode() {
-    ob_start(); ?>
-    <div id="dci-map" style="height: 600px;"></div>
-    <?php
+function dci_map_shortcode() {
+    ob_start();
+    include plugin_dir_path(__FILE__) . 'templates/map-template.php';
     return ob_get_clean();
 }
-add_shortcode('dci_animation_v2', 'dci_visualizer_shortcode');
+add_shortcode('dci_map', 'dci_map_shortcode');
 
-// Include settings page
-require_once plugin_dir_path(__FILE__) . 'includes/settings-page.php';
+?>
